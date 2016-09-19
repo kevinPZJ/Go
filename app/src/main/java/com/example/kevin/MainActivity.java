@@ -8,19 +8,14 @@ import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-
+import android.os.PowerManager;
+import android.view.KeyEvent;
 import android.view.Menu;
-
 import android.view.View;
-
 import android.view.Window;
 import android.widget.Button;
-
-import android.widget.RelativeLayout;
-
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
@@ -31,7 +26,6 @@ import com.baidu.mapapi.map.BaiduMap.OnMapClickListener;
 import com.baidu.mapapi.map.BaiduMap.OnMarkerClickListener;
 import com.baidu.mapapi.map.BitmapDescriptor;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
-
 import com.baidu.mapapi.map.MapPoi;
 import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
@@ -101,6 +95,12 @@ public class MainActivity extends Activity
 
 	private ArcMenu mArcMenu;//自定义卫星菜单
 
+	private PowerManager.WakeLock mWakeLock;
+	private PowerManager mPowerManager;// 电源管理服务
+
+	private long exitTime = 0;
+
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
@@ -111,18 +111,20 @@ public class MainActivity extends Activity
 		SDKInitializer.initialize(getApplicationContext());
 		setContentView(R.layout.activity_main);
 
+
 		this.context = this;
 		if (SettingsActivity.sharedPreferences == null) {
 			SettingsActivity.sharedPreferences = this.getSharedPreferences(
 					SettingsActivity.SETP_SHARED_PREFERENCES,
 					Context.MODE_PRIVATE);
 		}
-
 		init_mapView();
 		// 初始化定位
 		initLocation();
 //		initMarker();
 		initEvent();// 卫星菜单的监听事件
+
+
 
 		if (thread == null) {
 
@@ -164,20 +166,14 @@ public class MainActivity extends Activity
 			public boolean onMarkerClick(Marker marker)
 			{
 				Bundle extraInfo = marker.getExtraInfo();
-
-
 				TextView tv = new TextView(context);
 				tv.setBackgroundResource(R.drawable.location_tips);
 				tv.setPadding(30, 20, 30, 50);
-
 				tv.setTextColor(Color.parseColor("#ffffff"));
-
 				final LatLng latLng = marker.getPosition();
 				Point p = mBaiduMap.getProjection().toScreenLocation(latLng);
 				p.y -= 47;
 				LatLng ll = mBaiduMap.getProjection().fromScreenLocation(p);
-
-
 				return true;
 			}
 		});
@@ -206,19 +202,21 @@ public class MainActivity extends Activity
 		public void handleMessage(Message msg) {
 			// TODO Auto-generated method stub
 			super.handleMessage(msg);        // 此处可以更新UI
+//			acquireWakeLock();
 			countDistance();     //调用距离计算方法
 			countStep();          //调用步数计算方法
 
 			try {
 
-				tv_show_step.setText(URLDecoder.decode(total_step + "", "UTF-8"));// 显示当前步数
+				tv_show_step.setText(total_step + "");// 显示当前步数
+				tv_distance.setText(formatDouble(distance));
+				tv_timer.setText(getFormatTime(timer));// 显示当前运行时间
 
 			} catch (Exception e) { //
 
 			}
 
-			tv_distance.setText(formatDouble(distance));
-			tv_timer.setText(getFormatTime(timer));// 显示当前运行时间
+
 
 
 
@@ -274,8 +272,9 @@ public class MainActivity extends Activity
 	{
 		super.onResume();
 		// 在activity执行onResume时执行mMapView. onResume ()，实现地图生命周期管理
+//		acquireWakeLock();
 		mMapView.onResume();
-		addView();
+		addViewAgain();
 		init_step(); //步数计算相关
 	}
 
@@ -283,6 +282,7 @@ public class MainActivity extends Activity
 	protected void onStart()
 	{
 		super.onStart();
+//		acquireWakeLock();
 		// 开启定位
 		mBaiduMap.setMyLocationEnabled(true);
 		if (!mLocationClient.isStarted())
@@ -294,9 +294,11 @@ public class MainActivity extends Activity
 	@Override
 	protected void onPause()
 	{
+
 		super.onPause();
 		// 在activity执行onDestroy时执行mMapView.onDestroy()，实现地图生命周期管理
 		mMapView.onPause();
+//		acquireWakeLock();
 	}
 
 	@Override
@@ -318,6 +320,7 @@ public class MainActivity extends Activity
 		super.onDestroy();
 		// 在activity执行onDestroy时执行mMapView.onDestroy()，实现地图生命周期管理
 		mMapView.onDestroy();
+//		releaseWakeLock();
 	}
 
 
@@ -402,6 +405,25 @@ public class MainActivity extends Activity
 		handler.removeCallbacks(thread);
 
 	}
+	private void addViewAgain() {
+		tv_show_step = (TextView) this.findViewById(R.id.show_step);
+		tv_timer = (TextView) this.findViewById(R.id.timer);
+
+		tv_distance = (TextView) this.findViewById(R.id.distance);
+
+		btn_start = (Button) this.findViewById(R.id.start);
+		btn_stop = (Button) this.findViewById(R.id.stop);
+
+		step_counter = (TextView)findViewById(R.id.step_counter);
+		step_counter.setText("steps");
+
+		StepDetector.CURRENT_SETP = total_step;
+		tv_show_step.setText(total_step + "");
+		tv_distance.setText(formatDouble(distance));
+		tv_timer.setText(getFormatTime(timer));// 显示当前运行时间
+		handler.removeCallbacks(thread);
+
+	}
 
 	/**
 	 * 初始化计算器界面
@@ -422,8 +444,8 @@ public class MainActivity extends Activity
 
 		tv_show_step.setText(total_step + "");
 
-		btn_start.setEnabled(!StepCounterService.FLAG);
-		btn_stop.setEnabled(StepCounterService.FLAG);
+//		btn_start.setEnabled(!StepCounterService.FLAG);
+//		btn_stop.setEnabled(StepCounterService.FLAG);
 
 		if (StepCounterService.FLAG) {
 			btn_stop.setText(getString(R.string.pause));
@@ -469,7 +491,7 @@ public class MainActivity extends Activity
 					tv_timer.setText(getFormatTime(timer));
 
 					tv_show_step.setText("0");
-			tv_distance.setText(formatDouble(0.0));
+					tv_distance.setText(formatDouble(0.0));
 
 					handler.removeCallbacks(thread);
 				}
@@ -504,17 +526,6 @@ public class MainActivity extends Activity
 		return strHour + ":" + strMinute + ":" + strSecond;
 		// + strMillisecond;
 	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.activity_step, menu);
-		return true;
-	}
-
-
-
-
 
 	private void countDistance() {
 		if (StepDetector.CURRENT_SETP % 2 == 0) {
@@ -595,6 +606,46 @@ public class MainActivity extends Activity
 		});
 	}
 
+//	private void acquireWakeLock()
+//	{
+//		if (null == mWakeLock)
+//		{
+//			mPowerManager = (PowerManager) this
+//					.getSystemService(Context.POWER_SERVICE);
+//			mWakeLock = mPowerManager.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK
+//					| PowerManager.ACQUIRE_CAUSES_WAKEUP, "S");
+//			mWakeLock.acquire();
+//		}
+//			if (null != mWakeLock)
+//			{
+//				mWakeLock.acquire();
+//			}
+//		}
+//
+//	private void releaseWakeLock()
+//	{
+//		if (null != mWakeLock)
+//		{
+//			mWakeLock.release();
+//			mWakeLock = null;
+//		}
+//	}
+
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN) {
+			if ((System.currentTimeMillis() - exitTime) > 2000) {
+				Toast.makeText(getApplicationContext(), "再按一次退出程序", Toast.LENGTH_SHORT).show();
+				exitTime = System.currentTimeMillis();
+			} else {
+				finish();
+				System.exit(0);
+			}
+			return true;
+		}
+		return super.onKeyDown(keyCode, event);
+	}
 }
 
 

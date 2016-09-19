@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.widget.SeekBar;
@@ -46,11 +47,8 @@ public class SettingsActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.settings);
-
 		addView();
-
 		init();
-
 		listener();
 
 	}
@@ -206,4 +204,6 @@ public class SettingsActivity extends Activity {
 		
 		init();
 	}
+
+
 }

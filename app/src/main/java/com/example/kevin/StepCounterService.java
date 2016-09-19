@@ -50,11 +50,11 @@ public class StepCounterService extends Service {
 
        // 电源管理服务
        mPowerManager = (PowerManager) this
-               .getSystemService(Context.POWER_SERVICE);
-       mWakeLock = mPowerManager.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK
-               | PowerManager.ACQUIRE_CAUSES_WAKEUP, "S");
-       mWakeLock.acquire();
-   }
+            .getSystemService(Context.POWER_SERVICE);
+    mWakeLock = mPowerManager.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK
+    | PowerManager.ACQUIRE_CAUSES_WAKEUP, "S");
+    mWakeLock.acquire();
+}
 
    @Override
    public void onDestroy() {
