@@ -87,7 +87,6 @@ public class MainActivity extends Activity
 	private LocationMode mLocationMode;
 
 	private ArcMenu mArcMenu;//自定义卫星菜单
-
 	private PowerManager.WakeLock mWakeLock;
 	private PowerManager mPowerManager;// 电源管理服务
 
@@ -104,7 +103,6 @@ public class MainActivity extends Activity
 		SDKInitializer.initialize(getApplicationContext());
 		setContentView(R.layout.activity_main);
 
-
 		this.context = this;
 		if (SettingsActivity.sharedPreferences == null) {
 			SettingsActivity.sharedPreferences = this.getSharedPreferences(
@@ -118,9 +116,7 @@ public class MainActivity extends Activity
 		initEvent();// 卫星菜单的监听事件
 
 
-
 		if (thread == null) {
-
 			thread = new Thread() {
 
 				@Override
