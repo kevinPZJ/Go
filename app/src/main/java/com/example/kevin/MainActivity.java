@@ -10,7 +10,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.PowerManager;
 import android.view.KeyEvent;
-import android.view.Menu;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
@@ -39,8 +38,6 @@ import com.baidu.mapapi.map.OverlayOptions;
 import com.baidu.mapapi.model.LatLng;
 import com.example.kevin.MyOrientationListener.OnOrientationListener;
 import com.example.kevin.view.ArcMenu;
-
-import java.net.URLDecoder;
 import java.text.DecimalFormat;
 
 
@@ -53,10 +50,6 @@ public class MainActivity extends Activity
 
 	private Button btn_start;// 开始按钮
 	private Button btn_stop;// 暂停/清零按钮
-
-
-
-
 
 	private long timer = 0;//运动时间
 	private  long startTimer = 0;// 开始时间
